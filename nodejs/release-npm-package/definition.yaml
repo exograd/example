@@ -1,0 +1,43 @@
+---
+type: "pipeline"
+version: 1
+name: "release-my-npm-package"
+data:
+  tasks:
+    - task: "release-npm-package"
+      parameters:
+        git: "git@github.com:exograd/js-eventline.git"
+
+---
+type: "task"
+version: 1
+name: "release-npm-package"
+data:
+  parameters:
+    - name: "git"
+      type: "string"
+      environment: "GIT_REPOSITORY"
+  runtime:
+    name: "container"
+    parameters:
+      image: "node:lts-alpine3.14"
+  identities:
+    - "npm-registry"
+    - "github-ssh"
+  environment:
+    GIT_SSH_COMMAND: "ssh -i /eventline/identities/github-ssh/private_key"
+  steps:
+    - label: "clone the repository"
+      code: |
+        mkdir -p $HOME/.ssh
+        ssh-keyscan -H github.com >> $HOME/.ssh/known_hosts
+        git clone --recurse-submodules $GIT_REPOSITORY repo
+        revision=$(cat /eventline/event/new_revision)
+        git -C repo reset --hard $revision
+        git -C repo submodule update
+    - label: "build npm package"
+      code: |
+        cd repo && npm build
+    - label: "release npm package"
+      code: |
+        cd repo && npm publish
