@@ -1,4 +1,18 @@
 ---
+type: "trigger"
+version: 1
+name: "js-eventline-push"
+data:
+  connector: "github"
+  event: "push"
+  parameters:
+    organization: "exograd"
+    repository: "js-eventline"
+  identity: "github-triggers"
+  pipeline:
+    - "release-my-npm-package"
+
+---
 type: "pipeline"
 version: 1
 name: "release-my-npm-package"
